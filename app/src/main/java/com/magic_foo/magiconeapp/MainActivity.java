@@ -7,13 +7,22 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
-public class MainActivity extends Activity implements SensorEventListener {
+public class MainActivity extends Activity implements SensorEventListener, View.OnTouchListener {
 
-    TextView textView;
+    TextView tvAzimuth;
+    TextView tvDistance;
     private final int TIMER_DELAY = 1000;
+    private final int MIN_DISTANCE = 100;
+    private final int MAX_DISTANCE = 10000000;
+    private final double DISTANCE_INC = 1.2;
     private SensorManager mSensorManager;
+    private long dialDistance = MIN_DISTANCE;
 
 
     @Override
@@ -23,7 +32,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
-        textView = (TextView)findViewById(R.id.textView);
+        tvAzimuth = (TextView)findViewById(R.id.tvAzimuth);
+        tvDistance = (TextView)findViewById(R.id.tvDistance);
+
+        resetDial();
 
     }
 
@@ -42,8 +54,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         mSensorManager.unregisterListener(this);
     }
 
-
-    private void initializeLoggingTimer() {
+/*
+    private void initializeTimer() {
         Thread timer = new Thread() {
             public void run () {
                 for (;;) {
@@ -61,33 +73,53 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     protected void timerEvent() {
-/*
-        float[] mGravity;
-        float[] mGeomagnetic;
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
-            mGravity = event.values;
-        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
-            mGeomagnetic = event.values;
-        if (mGravity != null && mGeomagnetic != null) {
-            float I[] = new float[9];
-            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
-            if (success) {
-                float orientation[] = new float[3];
-                SensorManager.getOrientation(R, orientation);
-                azimut = orientation[0]; // orientation contains: azimut, pitch and roll
+    }*/
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        Log.d("MusicBoxActivity", "event.source: " + event.getSource() + ", event.action: " + event.getAction());
+        if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_SCROLL:
+                    Log.d("MusicBoxActivity", "event.getAxisValue: " + event.getAxisValue(MotionEvent.AXIS_VSCROLL));
+                    if (event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f)
+                        dialUpdated(-1);
+                    else
+                        dialUpdated(1);
+                    return true;
             }
-        }*/
+        }
+        return super.onGenericMotionEvent(event);
+    }
+
+    protected void dialUpdated(int step) {
+        if (step > 0 && dialDistance < MAX_DISTANCE / DISTANCE_INC) {
+            dialDistance = Math.round(dialDistance * DISTANCE_INC);
+        } else if (step < 0 && dialDistance >= MIN_DISTANCE * DISTANCE_INC) {
+            dialDistance = Math.round(dialDistance / DISTANCE_INC);
+        }
+        if (tvDistance!=null) tvDistance.setText(String.valueOf(dialDistance));
+    }
+
+    protected void resetDial(){
+        dialDistance = MIN_DISTANCE;
+        dialUpdated(0);
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         // get the angle around the z-axis rotated
         float degree = Math.round(event.values[0]);
-        textView.setText("Heading: " + Float.toString(degree) + " degrees");
+        tvAzimuth.setText("Heading: " + Float.toString(degree) + " degrees");
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        return false;
     }
 }
