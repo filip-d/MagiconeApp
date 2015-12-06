@@ -10,35 +10,40 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.magic_foo.magiconeapp.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:id="@+id/textView2"/>
+
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Text"
         android:id="@+id/tvAzimuth"
-        android:layout_below="@+id/textView2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="141dp"/>
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"/>
     <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="New Text"
     android:id="@+id/tvDistance"
-    android:layout_below="@+id/tvAzimuth"
-    android:layout_centerHorizontal="true"
-    android:layout_marginTop="141dp"/>
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="New Text"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:id="@+id/tvApiResponse"
-        android:layout_below="@+id/tvDistance"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="141dp"/>
+        android:textSize="@dimen/abc_dialog_padding_material"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="NW"
+        android:id="@+id/tvDirection"
+        android:layout_marginTop="45dp"
+        android:layout_below="@+id/tvApiResponse"
+        android:layout_centerHorizontal="true"/>
 
 </RelativeLayout>

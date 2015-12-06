@@ -32,13 +32,16 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     TextView tvAzimuth;
     TextView tvDistance;
     TextView tvApiResponse;
+    TextView tvDirection;
+
     private final int TIMER_DELAY = 1000;
     private final int MIN_DISTANCE = 100;
     private final int MAX_DISTANCE = 10000000;
     private final double DISTANCE_INC = 1.2;
     private final int MAX_VOLUME = 100;
     private final int AZIMUTH_TOLERANCE = 10;
-    
+    private final int DIAL_LEVEL_SENSITIVITY = 10;
+
     
     private SensorManager mSensorManager;
     private MediaPlayer noisePlayer;
@@ -46,6 +49,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     private int azimuth = 0;
     private int dialDistance = MIN_DISTANCE;
+    private int dialLevel = 0;
 
     private int lastCheckedAzimuth = 0;
     private int lastCheckedDistance = 0;
@@ -65,6 +69,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         tvAzimuth = (TextView)findViewById(R.id.tvAzimuth);
         tvDistance = (TextView)findViewById(R.id.tvDistance);
         tvApiResponse = (TextView)findViewById(R.id.tvApiResponse);
+        tvDirection= (TextView)findViewById(R.id.tvDirection);
 
         resetDial();
         initializeTimer();
@@ -135,6 +140,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     }
 
     protected void dialUpdated(int step) {
+        dialLevel += step;
+        if (dialLevel < 0) dialLevel = 0;
         if (step > 0 && dialDistance < MAX_DISTANCE / DISTANCE_INC) {
             dialDistance = (int) Math.round(dialDistance * DISTANCE_INC);
         } else if (step < 0 && dialDistance >= MIN_DISTANCE * DISTANCE_INC) {
@@ -145,6 +152,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     protected void resetDial(){
         dialDistance = MIN_DISTANCE;
+        dialLevel = 0;
         dialUpdated(0);
     }
 
@@ -170,10 +178,12 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         //playSound(getResources().getIdentifier(filename, "raw", getPackageName()));
         if (nowPlayingSound.equals(filename)) return;
         nowPlayingSound = filename;
+        if (noisePlayer.isPlaying()) noisePlayer.stop();
         noisePlayer.reset();
         try {
             noisePlayer.setDataSource(this, Uri.parse("android.resource://" + getPackageName() + "/raw/" + filename));
             noisePlayer.prepare();
+            noisePlayer.setLooping(true);
             noisePlayer.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -194,7 +204,11 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
         int levelSize = (MAX_DISTANCE - MIN_DISTANCE) / placeMap.getSize();
 
-        int mappedLevel = distance / levelSize;
+        int mappedLevel = dialLevel / DIAL_LEVEL_SENSITIVITY;
+        if (mappedLevel >= placeMap.getSize()) {
+            mappedLevel = placeMap.getSize() - 1;
+            dialLevel = (mappedLevel+1) * DIAL_LEVEL_SENSITIVITY - 1;
+        }
         int mappedDirection = azimuth / 45;
 
         final Place currentPlace = placeMap.getLevel(mappedLevel).getItem(mappedDirection);
@@ -203,6 +217,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             @Override
             public void run() {
                 tvApiResponse.setText(currentPlace.getDescription());
+                tvDirection.setText(currentPlace.getDirection());
             }
         });
 
